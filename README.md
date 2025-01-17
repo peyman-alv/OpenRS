@@ -1,1 +1,1 @@
-# EasyRS
+# OpenRS
