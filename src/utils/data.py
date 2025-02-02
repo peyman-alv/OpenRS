@@ -80,7 +80,7 @@ def load_data_100k(
 
 def load_data_1m(
     path: str, delimiter: str = "::", frac: float = 0.1, seed: int = 1234
-) -> Tuple[int, int, np.array, np.array, np.array, np.array]:
+) -> Tuple[int, int, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Load the MovieLens 1M dataset and split into train/test sets."""
     data = data = np.genfromtxt(
         os.path.join(path, "movielens_1m_dataset.dat"),
