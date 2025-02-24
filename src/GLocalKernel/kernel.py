@@ -70,7 +70,7 @@ class KernelNet(nn.Module):
         lambda_s: float,
         lambda_2: float,
         activation: nn.Module,
-    ):
+    ) -> None:
         super(KernelNet, self).__init__()
 
         self.layers = nn.ModuleList(
@@ -86,7 +86,7 @@ class KernelNet(nn.Module):
             ]
         )
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         total_reg_term = 0.0
         for layer in self.layers:
             x, reg = layer(x)
