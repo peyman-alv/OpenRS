@@ -9,6 +9,7 @@ from typing import Tuple
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 
 class KernelLayer(nn.Module):
@@ -29,17 +30,17 @@ class KernelLayer(nn.Module):
         self.lambda_2 = lambda_2
         self.activation = activation
 
-        self.W = nn.Parameter(torch.Tensor(n_in, n_hid))
-        self.u = nn.Parameter(torch.Tensor(n_in, 1, n_dim))
-        self.v = nn.Parameter(torch.Tensor(1, n_hid, n_dim))
+        self.W = nn.Parameter(torch.randn(n_in, n_hid))
+        self.u = nn.Parameter(torch.randn(n_in, 1, n_dim))
+        self.v = nn.Parameter(torch.randn(1, n_hid, n_dim))
         self.b = nn.Parameter(torch.Tensor(n_hid))
 
         self.reset_parameters()
 
     def reset_parameters(self) -> None:
-        nn.init.xavier_uniform_(self.W)
-        nn.init.normal_(self.u, mean=0.0, std=1e-3)
-        nn.init.normal_(self.v, mean=0.0, std=1e-3)
+        nn.init.xavier_uniform_(self.W, gain=torch.nn.init.calculate_gain("relu"))
+        nn.init.xavier_uniform_(self.u, gain=torch.nn.init.calculate_gain("relu"))
+        nn.init.xavier_uniform_(self.v, gain=torch.nn.init.calculate_gain("relu"))
         nn.init.zeros_(self.b)
 
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -48,8 +49,12 @@ class KernelLayer(nn.Module):
         y = torch.matmul(x, W_eff) + self.b
         y = self.activation(y)
 
-        sparse_reg_term = self.lambda_s * torch.sum(w_hat**2)
-        l2_reg_term = self.lambda_2 * torch.sum(self.W**2)
+        sparse_reg = F.mse_loss(w_hat, torch.zeros_like(w_hat))
+        sparse_reg_term = self.lambda_s * sparse_reg
+
+        l2_reg = F.mse_loss(self.W, torch.zeros_like(self.W))
+        l2_reg_term = self.lambda_2 * l2_reg
+
         reg_term = sparse_reg_term + l2_reg_term
 
         return y, reg_term
@@ -70,6 +75,7 @@ class KernelNet(nn.Module):
         lambda_s: float,
         lambda_2: float,
         activation: nn.Module,
+        dropout_rate: float,
     ) -> None:
         super(KernelNet, self).__init__()
 
@@ -86,9 +92,13 @@ class KernelNet(nn.Module):
             ]
         )
 
+        self.dropout = nn.Dropout(dropout_rate)
+
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         total_reg_term = 0.0
-        for layer in self.layers:
+        for i, layer in enumerate(self.layers):
             x, reg = layer(x)
+            x = self.dropout(x) if i < len(self.layers) - 1 else x
             total_reg_term += reg
+
         return x, total_reg_term

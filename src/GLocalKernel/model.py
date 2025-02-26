@@ -2,6 +2,7 @@ from typing import Tuple
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 
 class GlobalLocalKernelModel(nn.Module):
@@ -18,8 +19,10 @@ class GlobalLocalKernelModel(nn.Module):
         self.gk_size = gk_size
         self.dot_scale = dot_scale
 
-        self.conv_kernel = nn.Parameter(torch.Tensor(n_m, self.gk_size**2))
-        nn.init.normal_(self.conv_kernel, mean=0.0, std=0.1)
+        self.conv_kernel = nn.Parameter(torch.randn(n_m, gk_size**2) * 0.1)
+        nn.init.xavier_uniform_(
+            self.conv_kernel, gain=torch.nn.init.calculate_gain("relu")
+        )
 
     def forward(
         self, x: torch.Tensor, x_local: torch.Tensor
@@ -37,6 +40,6 @@ class GlobalLocalKernelModel(nn.Module):
 
     def global_conv(self, x: torch.Tensor, W: torch.Tensor) -> torch.Tensor:
         x = x.unsqueeze(0).unsqueeze(0)
-        conv2d = nn.ReLU()(nn.functional.conv2d(x, W, stride=1, padding=1))
+        conv2d = nn.LeakyReLU()(F.conv2d(x, W, stride=1, padding=1))
         conv2d = conv2d.squeeze(0).squeeze(0)
         return conv2d
