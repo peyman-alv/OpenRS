@@ -21,7 +21,7 @@ class GlobalLocalKernelModel(nn.Module):
 
         self.conv_kernel = nn.Parameter(torch.randn(n_m, gk_size**2) * 0.1)
         nn.init.xavier_uniform_(
-            self.conv_kernel, gain=torch.nn.init.calculate_gain("relu")
+            self.conv_kernel, gain=torch.nn.init.calculate_gain("leaky_relu")
         )
 
     def forward(

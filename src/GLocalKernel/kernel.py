@@ -38,9 +38,9 @@ class KernelLayer(nn.Module):
         self.reset_parameters()
 
     def reset_parameters(self) -> None:
-        nn.init.xavier_uniform_(self.W, gain=torch.nn.init.calculate_gain("relu"))
-        nn.init.xavier_uniform_(self.u, gain=torch.nn.init.calculate_gain("relu"))
-        nn.init.xavier_uniform_(self.v, gain=torch.nn.init.calculate_gain("relu"))
+        nn.init.xavier_uniform_(self.W, gain=torch.nn.init.calculate_gain("leaky_relu"))
+        nn.init.xavier_uniform_(self.u, gain=torch.nn.init.calculate_gain("leaky_relu"))
+        nn.init.xavier_uniform_(self.v, gain=torch.nn.init.calculate_gain("leaky_relu"))
         nn.init.zeros_(self.b)
 
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
