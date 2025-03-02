@@ -141,16 +141,13 @@ class GLKTrainer:
 
         def clouser_f():
             self.optimizer_f.zero_grad()
-            x_local = (
-                torch.Tensor(
-                    np.clip(train_r_local.float().cpu().detach().numpy(), 1.0, 5.0)
-                )
-                .double()
-                .to(self.device)
-            )
+            # Re-create fresh copies of the inputs so a new graph is built every time.
+            x = train_r.clone().detach().double().to(self.device)
+            x_local = train_r_local.clone().detach().double().to(self.device)
+            m = train_m.clone().detach().double().to(self.device)
             self.model.train()
-            pred, reg = self.model(train_r, x_local)
-            loss = self.loss_fn(pred, reg, train_r, train_m)
+            pred, reg = self.model(x, x_local)
+            loss = self.loss_fn(pred, reg, x, m)
             loss.backward()
             return loss
 
